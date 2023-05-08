@@ -30,8 +30,10 @@ def correlate(x: jnp.ndarray, y: jnp.ndarray, mode='circulate', axis=-1):
             axis=axis
         )
         
-    
-    func = lambda x, y: jnp.correlate(x, y, mode=mode)
-    # +1 to make that axis's meaning in other modes is same as ciculate mode.
-    return jax.vmap(func, ((axis + 1)%ndim , (axis + 1)%ndim))(x, y)
+    if ndim == 1:
+        return jnp.correlate(x, y, mode=mode)
+    else:
+        func = lambda x, y: jnp.correlate(x, y, mode=mode)
+        # +1 to make that axis's meaning in other modes is same as ciculate mode.
+        return jax.vmap(func, ((axis + 1)%ndim , (axis + 1)%ndim))(x, y)
 

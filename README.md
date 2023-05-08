@@ -12,7 +12,7 @@
 ```bash
 pip install numpy
 ```
-## 2. 安装jax
+## 2. 安装jax 
 jax是谷歌开发的支持CPU/CUDA/TPU和JIT技术的张量操作包。
 ```bash
 # CPU版本
@@ -36,3 +36,9 @@ pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-re
 ```bash
 python setup.py install
 ```
+
+
+# TODO
+1. 确定`correlate_x2y2_g`和`correlate_xabs2yabs2_g`中是否可以先计算X2和Y2的期望。
+2. 为所有函数添加测试
+3. 目前关联函数计算的第一个数有问题

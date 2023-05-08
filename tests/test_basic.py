@@ -9,4 +9,7 @@ def test_moment_x():
     
     
 def test_moment_x2():
-    
+    return
+    n = jnp.array([[1, 2, 3], [4, 5, 6]])
+    y = jnp.array([[2, 3, 4], [5, 95, 7]])
+    assert jnp.allclose(basic.moment_x2(y, n), jnp.array([1, 45.5, 1]))

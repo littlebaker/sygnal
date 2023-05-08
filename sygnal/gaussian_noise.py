@@ -116,7 +116,7 @@ def moment_x2y2_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray, n2: jnp.nda
     return jnp.mean(z1h**2 * z2h**2, axis=axis) - jnp.mean(n1h**2 * n2h**2, axis=axis) - Ex2 * jnp.mean(n2h**2, axis=axis) - Ey2 * jnp.mean(n1h**2, axis=axis) - 4 * Exy * jnp.mean(n1h * n2h, axis=axis)
 
 
-def expectation_correlate_xy_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray, n2: jnp.ndarray, mode='circulate', axis=-1):
+def correlate_xy_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray, n2: jnp.ndarray, mode='circulate', ):
     """calculate the :math:`X\star Y` subjects to 
     ```math
         Z1 = X + N1
@@ -133,15 +133,15 @@ def expectation_correlate_xy_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray
         axis (int, optional): calculation axis. Defaults to 0.
     """
     
-    z1h = z1 - jnp.mean(n1, axis=axis, keepdims=True)
-    z2h = z2 - jnp.mean(n2, axis=axis, keepdims=True)
-    n1h = n1 - jnp.mean(n1, axis=axis, keepdims=True)
-    n2h = n2 - jnp.mean(n2, axis=axis, keepdims=True)
+    z1h = z1 - jnp.mean(n1, axis=0, keepdims=True)
+    z2h = z2 - jnp.mean(n2, axis=0, keepdims=True)
+    n1h = n1 - jnp.mean(n1, axis=0, keepdims=True)
+    n2h = n2 - jnp.mean(n2, axis=0, keepdims=True)
     
-    return correlate(z1h, z2h, mode=mode, axis=axis) - correlate(n1h, n2h, mode=mode, axis=axis)
+    return correlate(z1h, z2h, mode=mode) - correlate(n1h, n2h, mode=mode)
 
 
-def expectation_correlate_x2y2_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray, n2: jnp.ndarray, mode='circulate', axis=-1):
+def correlate_x2y2_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray, n2: jnp.ndarray, mode='circulate'):
     """calculate the :math:`X^2 \star Y^2` subjects to 
     ```math
         Z1 = X + N1
@@ -159,9 +159,49 @@ def expectation_correlate_x2y2_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarr
         axis (int, optional): calculation axis. Defaults to 0.
     """
     
-    z1h = z1 - jnp.mean(n1, axis=axis, keepdims=True)
-    z2h = z2 - jnp.mean(n2, axis=axis, keepdims=True)
-    n1h = n1 - jnp.mean(n1, axis=axis, keepdims=True)
-    n2h = n2 - jnp.mean(n2, axis=axis, keepdims=True)
+    z1h = z1 - jnp.mean(n1, axis=0, keepdims=True)
+    z2h = z2 - jnp.mean(n2, axis=0, keepdims=True)
+    n1h = n1 - jnp.mean(n1, axis=0, keepdims=True)
+    n2h = n2 - jnp.mean(n2, axis=0, keepdims=True)
     
-    return correlate(z1h**2, z2h**2, mode=mode, axis=axis) - correlate(n1h**2, n2h**2, mode=mode, axis=axis) - correlate(moment_x2_g(z1, n1, axis=axis), moment_x2_g(z1, n1, axis=axis), mode=mode, axis=axis) - moment_x2_g(z2, n2, axis=axis) * correlate(n1h**2, n1h**2, mode=mode, axis=axis)
+    x2 = z1h **2 - n1h**2
+    y2 = z2h **2 - n2h**2
+
+    
+    return correlate(z1h**2, z2h**2, mode=mode) - correlate(n1h**2, n2h**2, mode=mode)\
+        - correlate(x2, n2h**2, mode=mode)\
+        - correlate(y2, n1h**2, mode=mode)
+        
+
+def correlate_xabs2yabs2_g(z1: jnp.ndarray, z2: jnp.ndarray, n1: jnp.ndarray, n2: jnp.ndarray, mode='circulate'):
+    """calculate the :math:`X^*X \star Y^*Y` subjects to 
+    ```math
+        Z1 = X + N1
+        Z2 = Y + N2
+        E[X^*X \star Y^*Y]=E[\hat Z_1^*\hat Z_1\star \hat Z_2^*\hat Z_2]
+            -E[\hat N_1^*\hat N_1\star \hat N_2^*\hat N_2]-E[X^*X]\star E[\hat N_2^*\hat N_2]
+            -E[Y^*Y]\star E[\hat N_1^*\hat N_1]        
+    ```
+
+    Args:
+        z1 (jnp.ndarray): signal 1 with noise
+        z2 (jnp.ndarray): signal 2 with noise
+        n1 (jnp.ndarray): noise signal 1
+        n2 (jnp.ndarray): noise signal 2
+        mode (str, optional): ['circulate', 'full', 'valid', 'same']. Defaults to 'circulate'.
+        axis (int, optional): calculation axis. Defaults to 0.
+        
+    """
+    
+    z1h = z1 - jnp.mean(n1, axis=0, keepdims=True)
+    z2h = z2 - jnp.mean(n2, axis=0, keepdims=True)
+    n1h = n1 - jnp.mean(n1, axis=0, keepdims=True)
+    n2h = n2 - jnp.mean(n2, axis=0, keepdims=True)
+
+    Exsx = jnp.mean(z1h * jnp.conj(z1h), axis=0) - jnp.mean(n1h * jnp.conj(n1h), axis=0)
+    Eysy = jnp.mean(z2h * jnp.conj(z2h), axis=0) - jnp.mean(n2h * jnp.conj(n2h), axis=0)
+    
+    return correlate(jnp.conj(z1h) * z1h, jnp.conj(z2h) * z2h, mode=mode) - correlate(jnp.conj(n1h) * n1h, jnp.conj(n2h) * n2h, mode=mode)\
+        - correlate(Exsx, jnp.mean(jnp.conj(n2h)*n2h, axis=0), mode=mode)\
+        - correlate(Eysy, jnp.mean(jnp.conj(n1h)*n1h, axis=0), mode=mode)
+        
