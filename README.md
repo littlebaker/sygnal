@@ -39,6 +39,4 @@ python setup.py install
 
 
 # TODO
-1. 确定`correlate_x2y2_g`和`correlate_xabs2yabs2_g`中是否可以先计算X2和Y2的期望。
 2. 为所有函数添加测试
-3. 目前关联函数计算的第一个数有问题
